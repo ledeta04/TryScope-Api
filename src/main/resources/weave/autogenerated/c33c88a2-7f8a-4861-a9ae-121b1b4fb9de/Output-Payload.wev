@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_c33c88a2_7f8a_4861_a9ae_121b1b4fb9de_Output_Payload = Array<{|  name: String,   salary: Number,   age: Number|}>
+

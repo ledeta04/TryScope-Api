@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="48ab7333-26ab-43bd-a6ed-90e7a82b29c1" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="72d0cbdd-85dc-47f6-8955-77ced48b561d" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="Lemlem11!" database="mulesoftdb" />
+	</db:config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="83161e8d-4fd5-4dcd-998d-7a62a1c6703a" >
+		<http:request-connection host="jsonplaceholder.typicode.com" />
+	</http:request-config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="9899baba-4214-44d8-b73e-7c115d8fb8e2" >
+		<file:connection workingDir="C:\Users\ledet\OneDrive\Documents\Mule_Class25_Practice" />
+	</file:config>
+	<flow name="Try_Scope" doc:id="5ce21227-fd63-40d1-9a87-297ac3392681" >
+		<http:listener doc:name="Listener" doc:id="b49bb354-a238-4f54-b4cd-1f6d519b17e3" config-ref="HTTP_Listener_config" path="/tryScope">
+			<http:error-response statusCode="#[vars.code]" />
+		</http:listener>
+		<try doc:name="Try" doc:id="77126f0c-3724-44d3-933f-8ad202fe0929" >
+			<db:select doc:name="Select" doc:id="c8311092-3d49-43c4-aff5-848674dac8dd" config-ref="Database_Config">
+				<db:sql ><![CDATA[select * from employeeXXXXX]]></db:sql>
+			</db:select>
+			<ee:transform doc:name="Transform Message" doc:id="d1eee6f4-7a52-40a2-8224-ffe4500fa855" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv
+---
+payload map {
+	name: $.employee_name,
+	salary: $.employee_salary,
+	age: $.employee_age
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<flow-ref doc:name="Flow Reference" doc:id="3e7b3397-2a88-404b-9be5-b5dbace4810f" name="employeeCSV" />
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="a194c8b3-12d4-4d58-bbe4-5d767258d3ef" type="ANY">
+					<http:request method="GET" doc:name="Request" doc:id="55468a08-9b71-4a20-9677-0851c3fe0ca2" config-ref="HTTP_Request_configuration" path="/users"/>
+					<ee:transform doc:name="Transform Message" doc:id="6961e16e-abf5-4b98-a417-9467a18e29d8" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<flow-ref doc:name="Flow Reference" doc:id="db79933b-6a36-4aa0-a652-5aa25bff58d4" name="employeeCSV"/>
+				</on-error-continue>
+			</error-handler>
+		
+</try>
+		<logger level="INFO" doc:name="Logger" doc:id="6837ba6b-21ee-4e1b-b280-68506b0c98c0" message="#[payload]"/>
+		<try doc:name="Try" doc:id="83c90219-60a6-4540-ae3c-ca59190406d7" >
+			<file:read doc:name="Read" doc:id="54bb6ff7-f1a5-4a7c-925b-2bf321c11584" config-ref="File_Config" path="employee.csv"/>
+			<logger level="INFO" doc:name="Logger" doc:id="6b49dd5a-fe58-4ff3-875b-5791df6555d5" message="#[payload]"/>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="60d4b554-4b0f-4c2b-ab5c-e02967f5fe03" type="ANY">
+					<set-variable value="404" doc:name="Set Variable" doc:id="36bb93ae-7c22-42f1-a8b8-0d4c1691087f" variableName="code"/>
+					<logger level="INFO" doc:name="Logger" doc:id="ccb7044d-6c19-4be5-9f65-f177489f4b4a" message='#["Message": "Bad Request"]'/>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+	
+</flow>
+	<sub-flow name="employeeCSV" doc:id="c33c88a2-7f8a-4861-a9ae-121b1b4fb9de">
+		<file:write doc:name="Write" doc:id="fdc900f1-bc64-4738-96cf-fcc01d585701" config-ref="File_Config" path="employee.csv"/>
+	</sub-flow>
+</mule>
