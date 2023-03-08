@@ -25,7 +25,7 @@ http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/fil
 		</http:listener>
 		<try doc:name="Try" doc:id="77126f0c-3724-44d3-933f-8ad202fe0929" >
 			<db:select doc:name="Select" doc:id="c8311092-3d49-43c4-aff5-848674dac8dd" config-ref="Database_Config">
-				<db:sql ><![CDATA[select * from employeeXXXXX]]></db:sql>
+				<db:sql ><![CDATA[select * from employee]]></db:sql>
 			</db:select>
 			<ee:transform doc:name="Transform Message" doc:id="d1eee6f4-7a52-40a2-8224-ffe4500fa855" >
 				<ee:message >
